@@ -5,7 +5,11 @@ const usersDB = {
   },
 };
 
+require("dotenv").config();
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const fsPromises = require("fs").promises;
+const path = require("path");
 
 const handleLogin = async (req, res) => {
   const { user, password } = req.body;
@@ -24,7 +28,37 @@ const handleLogin = async (req, res) => {
   const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
     //Create JWT
-    res.status(200).json({ message: `User ${user} logged in successfully.` });
+    const asseccToken = jwt.sign(
+      {
+        username: foundUser.username,
+      },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: "30s" }
+    );
+    const refreshToken = jwt.sign(
+      {
+        username: foundUser.username,
+      },
+      process.env.REFRESH_TOKEN_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    //Saving refreshToken With Current User
+    const otherUsers = usersDB.users.filter(
+      (person) => person.username !== foundUser.username
+    );
+    const currentUser = { ...foundUser, refreshToken };
+    usersDB.setUsers([...otherUsers, currentUser]);
+    await fsPromises.writeFile(
+      path.join(__dirname, "..", "data", "users.json"),
+      JSON.stringify(usersDB.users)
+    );
+
+    res.cookie("jwt", refreshToken, {
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+    res.json({ asseccToken });
   } else {
     return res.sendStatus(401).json({ message: "Unauthorized" });
   }
