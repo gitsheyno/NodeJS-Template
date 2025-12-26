@@ -1,6 +1,7 @@
 const fs = require("fs");
 const path = require("path");
 const coreObj = require("./config/corsOptions");
+const credentials = require("./middleware/credentials");
 
 const { logEvents, logger } = require("./middleware/logEvents");
 
@@ -13,6 +14,7 @@ const defineCookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 3500;
 
 app.use(logger);
+app.use(credentials);
 app.use(cors(coreObj));
 
 app.use(express.urlencoded({ extended: false }));
@@ -27,6 +29,7 @@ app.use("/", require("./routes/root"));
 app.use("/register", require("./routes/register"));
 app.use("/auth", require("./routes/auth"));
 app.use("/refresh", require("./routes/refresh"));
+app.use("/logout", require("./routes/logout"));
 app.use(verifyJWT);
 app.use("/employees", require("./routes/api/employees"));
 

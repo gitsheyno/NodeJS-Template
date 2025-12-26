@@ -12,7 +12,6 @@ const handleRefreshToken = (req, res) => {
   const cookie = req.cookies;
   if (!cookie?.jwt) return res.sendStatus(401);
 
-  console.log(cookie.jwt, "check");
   console.log(usersDB.users);
   const refreshToken = cookie.jwt;
 
