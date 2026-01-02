@@ -14,9 +14,11 @@ router
   .put(
     verifyRoles(ROLES_LIST.Admin, ROLES_LIST.Editor),
     employeesController.updateEmployee
-  )
-  .delete(verifyRoles(ROLES_LIST.Admin), employeesController.deleteEmployee);
+  );
 
-router.route("/:id").get(employeesController.getEmployee);
+router
+  .route("/:id")
+  .get(employeesController.getEmployee)
+  .delete(verifyRoles(ROLES_LIST.Admin), employeesController.deleteEmployee);
 
 module.exports = router;

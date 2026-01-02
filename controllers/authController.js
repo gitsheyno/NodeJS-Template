@@ -1,15 +1,7 @@
-const usersDB = {
-  users: require("../data/users.json"),
-  setUsers: function (data) {
-    this.users = data;
-  },
-};
-
 require("dotenv").config();
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
-const fsPromises = require("fs").promises;
-const path = require("path");
+const User = require("../model/User");
 
 const handleLogin = async (req, res) => {
   const { user, password } = req.body;
@@ -20,7 +12,7 @@ const handleLogin = async (req, res) => {
       .json({ message: "Username and password are required." });
   }
 
-  const foundUser = usersDB.users.find((person) => person.username === user);
+  const foundUser = await User.findOne({ username: user });
   if (!foundUser) {
     return res.sendStatus(401);
   }
@@ -28,7 +20,7 @@ const handleLogin = async (req, res) => {
   //Evaluate password
   const match = await bcrypt.compare(password, foundUser.password);
   if (match) {
-    const roles = Object.values(foundUser.roles);
+    const roles = Object.values(foundUser.roles).filter(Boolean);
     //Create JWT
     const asseccToken = jwt.sign(
       {
@@ -48,15 +40,9 @@ const handleLogin = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    //Saving refreshToken With Current User
-    const otherUsers = usersDB.users.filter(
-      (person) => person.username !== foundUser.username
-    );
-    const currentUser = { ...foundUser, refreshToken };
-    usersDB.setUsers([...otherUsers, currentUser]);
-    await fsPromises.writeFile(
-      path.join(__dirname, "..", "data", "users.json"),
-      JSON.stringify(usersDB.users)
+    await User.findOneAndUpdate(
+      { username: user },
+      { refreshToken: refreshToken }
     );
 
     res.cookie("jwt", refreshToken, {

@@ -1,23 +1,16 @@
-const usersDB = {
-  users: require("../data/users.json"),
-  setUsers: function (data) {
-    this.users = data;
-  },
-};
-
+const User = require("../model/User");
 require("dotenv").config();
 const jwt = require("jsonwebtoken");
 
-const handleRefreshToken = (req, res) => {
+const handleRefreshToken = async (req, res) => {
   const cookie = req.cookies;
+
   if (!cookie?.jwt) return res.sendStatus(401);
 
-  console.log(usersDB.users);
   const refreshToken = cookie.jwt;
 
-  const foundUser = usersDB.users.find(
-    (person) => person.refreshToken === refreshToken
-  );
+  const foundUser = await User.findOne({ refreshToken: refreshToken }).exec();
+
   if (!foundUser) {
     return res.sendStatus(403);
   }
@@ -38,7 +31,7 @@ const handleRefreshToken = (req, res) => {
       process.env.ACCESS_TOKEN_SECRET,
       { expiresIn: "30s" }
     );
-    res.json({ accessToken });
+    res.json({ accessToken, roles });
   });
 };
 

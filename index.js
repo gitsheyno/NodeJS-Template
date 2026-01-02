@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const fs = require("fs");
 const path = require("path");
 const coreObj = require("./config/corsOptions");
@@ -12,6 +14,12 @@ const app = express();
 const verifyJWT = require("./middleware/verifyJWT");
 const defineCookieParser = require("cookie-parser");
 const PORT = process.env.PORT || 3500;
+
+const mongoose = require("mongoose");
+const connectDB = require("./config/dbConn");
+
+//Connect to MongoDB
+connectDB();
 
 app.use(logger);
 app.use(credentials);
@@ -33,4 +41,7 @@ app.use("/logout", require("./routes/logout"));
 app.use(verifyJWT);
 app.use("/employees", require("./routes/api/employees"));
 
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+mongoose.connection.once("open", () => {
+  console.log("Connected to MongoDB");
+  app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+});
